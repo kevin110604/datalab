@@ -111,7 +111,9 @@ NOTES:
  */
 int absVal(int x)
 {
-    return 42;
+    int tmp = x >> 30;
+    int y = tmp >> 1;
+    return (x ^ y) + (~y + 1);
 }
 
 /*
@@ -124,7 +126,13 @@ int absVal(int x)
  */
 int addOK(int x, int y)
 {
-    return 42;
+    int x_sign = x >> 30;
+    int y_sign = y >> 30;
+    int res_sign = (x + y) >> 30;
+    x_sign >>= 1;
+    y_sign >>= 1;
+    res_sign >>= 1;
+    return !!(x_sign ^ y_sign) | !(res_sign ^ x_sign);
 }
 
 /*
@@ -200,7 +208,7 @@ int bang(int x)
  */
 int bitAnd(int x, int y)
 {
-    return 42;
+    return ~(~x | ~y);
 }
 
 /*
@@ -252,7 +260,7 @@ int bitMatch(int x, int y)
  */
 int bitNor(int x, int y)
 {
-    return 42;
+    return (~x & ~y);
 }
 
 /*
@@ -264,7 +272,7 @@ int bitNor(int x, int y)
  */
 int bitOr(int x, int y)
 {
-    return 42;
+    return ~(~x & ~y);
 }
 
 /*
@@ -301,7 +309,7 @@ int bitReverse(int x)
  */
 int bitXor(int x, int y)
 {
-    return 42;
+    return ~(~(x & ~y) & ~(~x & y));
 }
 
 /*
@@ -353,7 +361,8 @@ int countLeadingZero(int x)
  */
 int copyLSB(int x)
 {
-    return 42;
+    int lsb = x & 1;
+    return (lsb ^ ~0) + 1;
 }
 
 /*
