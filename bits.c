@@ -516,7 +516,18 @@ int ezThreeFourths(int x)
  */
 int fitsBits(int x, int n)
 {
-    return 42;
+    /*
+    int m = 32 + (~n + 1);
+    int one_or_zero = !!m;
+    int n_bit_var = x << one_or_zero;
+    n_bit_var <<= m + (~one_or_zero + 1);
+    n_bit_var >>= one_or_zero;
+    n_bit_var >>= m + (~one_or_zero + 1);
+    */
+    int m = 32 + (~n + 1);
+    int n_bit_var = x << m;
+    n_bit_var >>= m;
+    return !(x ^ n_bit_var);
 }
 
 /*
@@ -529,7 +540,9 @@ int fitsBits(int x, int n)
  */
 int fitsShort(int x)
 {
-    return 42;
+    int short_var = x << 16;
+    short_var >>= 16;
+    return !(x ^ short_var);
 }
 
 /*
