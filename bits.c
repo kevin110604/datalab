@@ -196,6 +196,7 @@ int anyOddBit(int x)
  */
 int bang(int x)
 {
+    // int res = x + ~x + 1;
     return 42;
 }
 
@@ -220,7 +221,72 @@ int bitAnd(int x, int y)
  */
 int bitCount(int x)
 {
-    return 42;
+    /*** too many ops ***/
+    int count = 0;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    x >>= 1;
+    count += x & 0x01;
+    return count;
 }
 
 /*
@@ -323,6 +389,22 @@ int bitXor(int x, int y)
  */
 int byteSwap(int x, int n, int m)
 {
+    /*
+    int byte_0 = x & 0x000000ff;
+    int byte_1 = (x >> 8) & 0x000000ff;
+    int byte_2 = (x >> 16) & 0x000000ff;
+    int byte_3 = x >> 24;
+    int d0 = (n ^ 0) | (m ^ 0);
+    int d1 = (n ^ 1) | (m ^ 1);
+    int d2 = (n ^ 2) | (m ^ 2);
+    int d3 = (n ^ 3) | (m ^ 3);
+    int c0 = 0;
+    int c1 = 8;
+    int c2 = 16;
+    int c3 = 24;
+
+    int res = (byte_3 << c3) + (byte_2 << c2) + (byte_1 << c1) + (byte_0 << c0);
+    */
     return 42;
 }
 
@@ -335,7 +417,9 @@ int byteSwap(int x, int n, int m)
  */
 int conditional(int x, int y, int z)
 {
-    return 42;
+    int choose_y = !!x;
+    int choose_z = !x;
+    return ((~choose_y + 1) & y) + ((~choose_z + 1) & z);
 }
 
 /*
@@ -374,7 +458,8 @@ int copyLSB(int x)
  */
 int distinctNegation(int x)
 {
-    return 42;
+    int neg = ~x + 1;
+    return !!(x ^ neg);
 }
 
 /*
@@ -398,7 +483,10 @@ int dividePower2(int x, int n)
  */
 int evenBits(void)
 {
-    return 42;
+    int res = 0x55;
+    res = (res << 8) + res;
+    res = (res << 16) + res;
+    return res;
 }
 
 /*
@@ -713,7 +801,7 @@ int isAsciiDigit(int x)
  */
 int isEqual(int x, int y)
 {
-    return 42;
+    return !(x ^ y);
 }
 
 /*
@@ -725,7 +813,15 @@ int isEqual(int x, int y)
  */
 int isGreater(int x, int y)
 {
-    return 42;
+    /*** WRONG ***/
+    int x_sign = x >> 30;
+    int y_sign = y >> 30;
+    int diff = x + (~y + 1);
+    int sign = diff >> 30;
+    sign >>= 1;
+    x_sign >>= 1;
+    y_sign >>= 1;
+    return (!sign) & (!!diff) & (!((!!x_sign) & (!y_sign)));
 }
 
 /*
@@ -737,7 +833,11 @@ int isGreater(int x, int y)
  */
 int isLess(int x, int y)
 {
-    return 42;
+    /*** WRONG ***/
+    int diff = x + (~y + 1);
+    int sign = diff >> 30;
+    sign >>= 1;
+    return (!!sign) & (!!diff);
 }
 
 /*
@@ -749,7 +849,11 @@ int isLess(int x, int y)
  */
 int isLessOrEqual(int x, int y)
 {
-    return 42;
+    /*** WRONG ***/
+    int diff = x + (~y + 1);
+    int sign = diff >> 30;
+    sign >>= 1;
+    return (!!sign) | (!diff);
 }
 
 /*
@@ -761,7 +865,9 @@ int isLessOrEqual(int x, int y)
  */
 int isNegative(int x)
 {
-    return 42;
+    int sign = x >> 30;
+    sign >>= 1;
+    return !!sign;
 }
 
 /*
@@ -773,7 +879,9 @@ int isNegative(int x)
  */
 int isNonNegative(int x)
 {
-    return 42;
+    int sign = x >> 30;
+    sign >>= 1;
+    return !sign;
 }
 
 /*
@@ -798,7 +906,7 @@ int isNonZero(int x)
  */
 int isNotEqual(int x, int y)
 {
-    return 42;
+    return !!(x ^ y);
 }
 
 /*
@@ -822,7 +930,9 @@ int isPallindrome(int x)
  */
 int isPositive(int x)
 {
-    return 42;
+    int sign = x >> 30;
+    sign >>= 1;
+    return !sign & !!x;
 }
 
 /*
@@ -847,7 +957,11 @@ int isPower2(int x)
  */
 int isTmax(int x)
 {
-    return 42;
+    int max = 0x7f;
+    max = (max << 8) + 0xff;
+    max = (max << 8) + 0xff;
+    max = (max << 8) + 0xff;
+    return !(x ^ max);
 }
 
 /*
@@ -859,7 +973,9 @@ int isTmax(int x)
  */
 int isTmin(int x)
 {
-    return 42;
+    int min = 1 << 30;
+    min <<= 1;
+    return !(x ^ min);
 }
 
 /*
@@ -871,7 +987,7 @@ int isTmin(int x)
  */
 int isZero(int x)
 {
-    return 42;
+    return !x;
 }
 
 /*
@@ -956,7 +1072,7 @@ int minimumOfTwo(int x, int y)
  */
 int minusOne(void)
 {
-    return 42;
+    return ~0;
 }
 
 /*
@@ -984,7 +1100,7 @@ int multFiveEighths(int x)
  */
 int negate(int x)
 {
-    return 42;
+    return ~x + 1;
 }
 
 /*
@@ -995,7 +1111,12 @@ int negate(int x)
  */
 int oddBits(void)
 {
-    return 42;
+    int res = 0xaa;
+    res = (res << 8) + res;
+    // res = (res << 16) + res;
+    res = (res << 15) + (res >> 1);
+    res = res << 1;
+    return res;
 }
 
 /*
@@ -1106,7 +1227,9 @@ int satMul3(int x)
  */
 int sign(int x)
 {
-    return 42;
+    int sign = x >> 30;
+    sign >>= 1;
+    return sign | !!x;
 }
 
 /*
@@ -1130,7 +1253,8 @@ int signMag2TwosComp(int x)
  */
 int specialBits(void)
 {
-    return 42;
+    int res = 0xd7 << 14;
+    return ~res;
 }
 
 /*
@@ -1166,7 +1290,11 @@ int thirdBits(void)
  */
 int tmax(void)
 {
-    return 42;
+    int max = 0x7f;
+    max = (max << 8) + 0xff;
+    max = (max << 8) + 0xff;
+    max = (max << 8) + 0xff;
+    return max;
 }
 
 /*
@@ -1177,7 +1305,9 @@ int tmax(void)
  */
 int tmin(void)
 {
-    return 42;
+    int min = 1 << 30;
+    min <<= 1;
+    return min;
 }
 
 /*
@@ -1234,5 +1364,8 @@ int twosComp2SignMag(int x)
  */
 int upperBits(int n)
 {
-    return 42;
+    int res = 1 << 30;
+    res <<= !!n;
+    res >>= n + ~0;
+    return res;
 }
