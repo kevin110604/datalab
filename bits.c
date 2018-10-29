@@ -196,8 +196,11 @@ int anyOddBit(int x)
  */
 int bang(int x)
 {
+    /*** WRONG ***/
     // int res = x + ~x + 1;
-    return 42;
+    // return 0 | (x & 1);
+    int minus_one = ~0;
+    return ~(~x + minus_one);
 }
 
 /*
@@ -551,14 +554,18 @@ int fitsShort(int x)
  *               Both the argument and result are passed as unsigned int's,
  *               but they are to be interpreted as the bit-level
  *               representations of single-precision floating point values.
- *               When argument is NaN, return argument..
+ *               When argument is NaN, return argument.
  *   Legal ops: Any integer/unsigned operations incl. ||, &&. also if, while
  *   Max ops: 10
  *   Rating: 2
  */
 unsigned floatAbsVal(unsigned uf)
 {
-    return 42;
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return uf;
+    unsigned miss_sign = uf & 0x7fffffffu;
+    return miss_sign;
 }
 
 /*
@@ -605,6 +612,17 @@ unsigned floatInt2Float(int x)
  */
 int floatIsEqual(unsigned uf, unsigned ug)
 {
+    /*** WRONG ***/
+    // if ((uf & 0x7f800000u) == 0x7f800000u)  /* exp is 255 */
+    //    if ((uf & 0x007fffffu) != 0)        /* fraction is nonzero */
+    //        return 0;
+    // if ((ug & 0x7f800000u) == 0x7f800000u)  /* exp is 255 */
+    //    if ((ug & 0x007fffffu) != 0)        /* fraction is nonzero */
+    //        return 0;
+    // if ((uf == 0x00000000u) || (ug == 0x00000000u))
+    //    if ((uf == 0x80000000u) || (ug == 0x80000000u))
+    //        return 1;
+    // return !(uf ^ ug);
     return 42;
 }
 
@@ -637,7 +655,11 @@ int floatIsLess(unsigned uf, unsigned ug)
  */
 unsigned floatNegate(unsigned uf)
 {
-    return 42;
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return uf;
+    uf = uf ^ 0x80000000u;
+    return uf;
 }
 
 /*
@@ -731,7 +753,8 @@ unsigned floatUnsigned2Float(unsigned u)
  */
 int getByte(int x, int n)
 {
-    return 42;
+    int n_mul_8_bits = n << 3;
+    return (x >> n_mul_8_bits) & 0x000000ff;
 }
 
 /*
@@ -802,7 +825,15 @@ int intLog2(int x)
  */
 int isAsciiDigit(int x)
 {
-    return 42;
+    int c0 = 0x30;
+    int c9 = 0x39;
+    int diff0 = x + (~c0 + 1);
+    int diff9 = c9 + (~x + 1);
+    int sign0 = diff0 >> 30;
+    int sign9 = diff9 >> 30;
+    sign0 >>= 1;
+    sign9 >>= 1;
+    return !sign0 & !sign9;
 }
 
 /*
@@ -827,6 +858,7 @@ int isEqual(int x, int y)
 int isGreater(int x, int y)
 {
     /*** WRONG ***/
+    int min = 1 << 30;
     int x_sign = x >> 30;
     int y_sign = y >> 30;
     int diff = x + (~y + 1);
@@ -834,7 +866,14 @@ int isGreater(int x, int y)
     sign >>= 1;
     x_sign >>= 1;
     y_sign >>= 1;
-    return (!sign) & (!!diff) & (!((!!x_sign) & (!y_sign)));
+    min <<= 1;
+    /*
+     * sign is positive
+     * diff cannot be zero
+     *
+     */
+    return ((!x) & !(y ^ min)) |
+           ((!sign) & (!!diff) & !((!!x_sign) & (!y_sign)));
 }
 
 /*
@@ -907,6 +946,9 @@ int isNonNegative(int x)
  */
 int isNonZero(int x)
 {
+    /*** WRONG ***/
+    // int neg_x = ~x + 1;
+    // return ~(x ^ neg_x) & (!!x);
     return 42;
 }
 
@@ -958,6 +1000,14 @@ int isPositive(int x)
  */
 int isPower2(int x)
 {
+    /*
+    int yes_or_no = 1;
+    int minus_one = ~0;
+    int max = 1 << 30;
+    max <<= 1;
+    max += minus_one;
+    yes_or_no = !!((x | max) ^ minus_one);
+    */
     return 42;
 }
 
@@ -1052,7 +1102,16 @@ int logicalNeg(int x)
  */
 int logicalShift(int x, int n)
 {
-    return 42;
+    int minus_one = ~0;
+    int mask = 1 << 30;
+    int choose_y = !!n;
+    int choose_z = !n;
+    mask <<= 1;
+    mask += minus_one; /* 0x7fffffff */
+    mask >>= n + minus_one;
+    mask = ((~choose_y + 1) & mask) + ((~choose_z + 1) & minus_one);
+    x >>= n;
+    return x & mask;
 }
 
 /*
@@ -1303,10 +1362,9 @@ int thirdBits(void)
  */
 int tmax(void)
 {
-    int max = 0x7f;
-    max = (max << 8) + 0xff;
-    max = (max << 8) + 0xff;
-    max = (max << 8) + 0xff;
+    int max = 1 << 30;
+    max <<= 1;
+    max += ~0;
     return max;
 }
 
