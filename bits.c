@@ -145,7 +145,10 @@ int addOK(int x, int y)
  */
 int allEvenBits(int x)
 {
-    return 42;
+    int res = 0x55;
+    res = (res << 8) + res;
+    res = (res << 16) + res;
+    return !((x & res) ^ res);
 }
 
 /*
@@ -158,7 +161,12 @@ int allEvenBits(int x)
  */
 int allOddBits(int x)
 {
-    return 42;
+    int res = 0xaa;
+    res = (res << 8) + res;
+    // res = (res << 16) + res;
+    res = (res << 15) + (res >> 1);
+    res = res << 1;
+    return !((x & res) ^ res);
 }
 
 /*
@@ -171,7 +179,10 @@ int allOddBits(int x)
  */
 int anyEvenBit(int x)
 {
-    return 42;
+    int res = 0x55;
+    res = (res << 8) + res;
+    res = (res << 16) + res;
+    return !!(x & res);
 }
 
 /*
@@ -184,7 +195,12 @@ int anyEvenBit(int x)
  */
 int anyOddBit(int x)
 {
-    return 42;
+    int res = 0xaa;
+    res = (res << 8) + res;
+    // res = (res << 16) + res;
+    res = (res << 15) + (res >> 1);
+    res = res << 1;
+    return !!(x & res);
 }
 
 /*
@@ -196,11 +212,14 @@ int anyOddBit(int x)
  */
 int bang(int x)
 {
-    /*** WRONG ***/
-    // int res = x + ~x + 1;
-    // return 0 | (x & 1);
-    int minus_one = ~0;
-    return ~(~x + minus_one);
+    int special = x >> 30;
+    int neg_x = ~x + 1;
+    int neg_x_xor_x = neg_x ^ x;
+    special >>= 1;
+    neg_x_xor_x >>= 30;
+    neg_x_xor_x >>= 1;
+    special = ~special + 1;
+    return ((~neg_x_xor_x + 1) | special) ^ 1;
 }
 
 /*
@@ -317,7 +336,7 @@ int bitMask(int highbit, int lowbit)
  */
 int bitMatch(int x, int y)
 {
-    return 42;
+    return (~(x & ~y) & ~(~x & y)); /*** NXor ***/
 }
 
 /*
@@ -475,7 +494,34 @@ int distinctNegation(int x)
  */
 int dividePower2(int x, int n)
 {
-    return 42;
+    /*
+    int shift = x >> n;
+    int shift_plus = shift + 1;
+    int x_sign = x >> 30;
+    int choose_y;
+    int choose_z;
+    int res;
+    x_sign >>= 1;
+    choose_y = !x_sign;
+    choose_z = !!x_sign;
+    res = ((~choose_y + 1) & shift) + ((~choose_z + 1) & shift_plus);
+    */
+    /*** WRONG ***/
+    int shift = x >> n;
+    int shift_plus = shift + 1;
+    int choose_y;
+    int choose_z;
+    int res;
+    int check;
+    int tmp = 1 << 30;
+    tmp <<= 1;
+    tmp += 1;
+    check = ((x & tmp) ^ tmp) | (!n);
+
+    choose_y = !!check;
+    choose_z = !check;
+    res = ((~choose_y + 1) & shift) + ((~choose_z + 1) & shift_plus);
+    return res;
 }
 
 /*
@@ -949,7 +995,14 @@ int isNonZero(int x)
     /*** WRONG ***/
     // int neg_x = ~x + 1;
     // return ~(x ^ neg_x) & (!!x);
-    return 42;
+    int special = x >> 30;
+    int neg_x = ~x + 1;
+    int neg_x_xor_x = neg_x ^ x;
+    special >>= 1;
+    neg_x_xor_x >>= 30;
+    neg_x_xor_x >>= 1;
+    special = ~special + 1;
+    return (~neg_x_xor_x + 1) | special;
 }
 
 /*
@@ -1339,7 +1392,35 @@ int specialBits(void)
  */
 int subtractionOK(int x, int y)
 {
-    return 42;
+    /*** too many ops***/
+    int neg_y = ~y + 1;
+    int x_sign;
+    int y_sign;
+    int res_sign;
+    int min = 1 << 30;
+    int min_or_not;
+    int common;
+    int special;
+    int choose_common;
+    int choose_specail;
+    int OK;
+
+    min <<= 1;
+    min_or_not = !(y ^ min);
+    choose_common = !min_or_not;
+    choose_specail = min_or_not;
+
+    x_sign = x >> 30;
+    y_sign = neg_y >> 30;
+    res_sign = (x + neg_y) >> 30;
+    x_sign >>= 1;
+    y_sign >>= 1;
+    res_sign >>= 1;
+
+    common = (!!(x_sign ^ y_sign) | !(res_sign ^ x_sign));
+    special = (!(min_or_not & (!x_sign)));
+    OK = ((~choose_common + 1) & common) + ((~choose_specail + 1) & special);
+    return OK;
 }
 
 /*
@@ -1351,7 +1432,12 @@ int subtractionOK(int x, int y)
  */
 int thirdBits(void)
 {
-    return 42;
+    int res = 0x00000049;
+    int tmp = 0x00000024;
+    tmp = (tmp << 4) + 0x00000009;
+    res = (res << 12) + tmp;
+    res = (res << 12) + tmp;
+    return res;
 }
 
 /*
