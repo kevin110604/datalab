@@ -111,9 +111,9 @@ NOTES:
  */
 int absVal(int x)
 {
-    int tmp = x >> 30;
-    int y = tmp >> 1;
-    return (x ^ y) + (~y + 1);
+    int x_sign = x >> 30;
+    x_sign >>= 1;
+    return (x ^ x_sign) + (~x_sign + 1);
 }
 
 /*
@@ -1367,7 +1367,17 @@ int sign(int x)
  */
 int signMag2TwosComp(int x)
 {
-    return 42;
+    int value;
+    int neg_value;
+    int x_sign;
+    int max = 1 << 30; /* 0x7fffffff */
+    max <<= 1;
+    max += ~0;
+    value = x & max;
+    neg_value = ~value + 1;
+    x_sign = x >> 30;
+    x_sign >>= 1;
+    return (~x_sign & value) + (x_sign & neg_value);
 }
 
 /*
@@ -1508,7 +1518,14 @@ int trueThreeFourths(int x)
  */
 int twosComp2SignMag(int x)
 {
-    return 42;
+    int abs_x;
+    int x_sign = x >> 30;
+    x_sign >>= 1;
+    abs_x = (x ^ x_sign) + (~x_sign + 1);
+    x_sign = ~x_sign + 1;
+    x_sign <<= 30;
+    x_sign <<= 1;
+    return abs_x | x_sign;
 }
 
 /*
