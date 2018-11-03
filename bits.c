@@ -111,8 +111,7 @@ NOTES:
  */
 int absVal(int x)
 {
-    int x_sign = x >> 30;
-    x_sign >>= 1;
+    int x_sign = x >> 31;
     return (x ^ x_sign) + (~x_sign + 1);
 }
 
