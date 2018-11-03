@@ -846,7 +846,8 @@ int howManyBits(int x)
  */
 int implication(int x, int y)
 {
-    return 42;
+    //return (x & y) | ((!x) & y) | ((!x) & (!y));
+    return !(x & (!y));
 }
 
 /*
@@ -994,7 +995,6 @@ int isNonNegative(int x)
  */
 int isNonZero(int x)
 {
-    /*** WRONG ***/
     // int neg_x = ~x + 1;
     // return ~(x ^ neg_x) & (!!x);
     int special = x >> 30;
@@ -1144,7 +1144,14 @@ int leftBitCount(int x)
  */
 int logicalNeg(int x)
 {
-    return 42;
+    int special = x >> 30;
+    int neg_x = ~x + 1;
+    int neg_x_xor_x = neg_x ^ x;
+    special >>= 1;
+    neg_x_xor_x >>= 30;
+    neg_x_xor_x >>= 1;
+    special = ~special + 1;
+    return ((~neg_x_xor_x + 1) | special) ^ 1;
 }
 
 /*
@@ -1270,7 +1277,14 @@ int remainderPower2(int x, int n)
  */
 int replaceByte(int x, int n, int c)
 {
-    return 42;
+    int n_mul_8_bits = n << 3;
+    int org = x & (0x000000ff << n_mul_8_bits);
+    int res = x >> (n_mul_8_bits + 8);
+    res = res << 8;
+    res = res | c;
+    res = res << n_mul_8_bits;
+    res = res | (x ^ org);
+    return res;
 }
 
 /*
