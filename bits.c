@@ -125,12 +125,9 @@ int absVal(int x)
  */
 int addOK(int x, int y)
 {
-    int x_sign = x >> 30;
-    int y_sign = y >> 30;
-    int res_sign = (x + y) >> 30;
-    x_sign >>= 1;
-    y_sign >>= 1;
-    res_sign >>= 1;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int res_sign = (x + y) >> 31;
     return !!(x_sign ^ y_sign) | !(res_sign ^ x_sign);
 }
 
