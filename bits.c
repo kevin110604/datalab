@@ -846,7 +846,7 @@ int howManyBits(int x)
  */
 int implication(int x, int y)
 {
-    //return (x & y) | ((!x) & y) | ((!x) & (!y));
+    // return (x & y) | ((!x) & y) | ((!x) & (!y));
     return !(x & (!y));
 }
 
