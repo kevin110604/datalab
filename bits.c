@@ -372,7 +372,12 @@ int bitOr(int x, int y)
  */
 int bitParity(int x)
 {
-    return 42;
+    x ^= x >> 16;
+    x ^= x >> 8;
+    x ^= x >> 4;
+    x ^= x >> 2;
+    x ^= x >> 1;
+    return x & 1;
 }
 
 /*
@@ -658,18 +663,16 @@ unsigned floatInt2Float(int x)
  */
 int floatIsEqual(unsigned uf, unsigned ug)
 {
-    /*** WRONG ***/
-    // if ((uf & 0x7f800000u) == 0x7f800000u)  /* exp is 255 */
-    //    if ((uf & 0x007fffffu) != 0)        /* fraction is nonzero */
-    //        return 0;
-    // if ((ug & 0x7f800000u) == 0x7f800000u)  /* exp is 255 */
-    //    if ((ug & 0x007fffffu) != 0)        /* fraction is nonzero */
-    //        return 0;
-    // if ((uf == 0x00000000u) || (ug == 0x00000000u))
-    //    if ((uf == 0x80000000u) || (ug == 0x80000000u))
-    //        return 1;
-    // return !(uf ^ ug);
-    return 42;
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return 0;
+    if ((ug & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+        if ((ug & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return 0;
+    if ((uf == 0x00000000u) || (uf == 0x80000000u))
+        if ((ug == 0x00000000u) || (ug == 0x80000000u))
+            return 1;
+    return !(uf ^ ug);
 }
 
 /*
