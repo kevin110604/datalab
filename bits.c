@@ -319,7 +319,17 @@ int bitCount(int x)
  */
 int bitMask(int highbit, int lowbit)
 {
-    return 42;
+    /*** too many ops ***/
+    int neg_lowbit = ~lowbit + 1;
+    int large = !((highbit + neg_lowbit) >> 31);
+    int small = !large;
+    int n = highbit + neg_lowbit;
+    int res = ~0;
+    res <<= n;
+    res <<= 1;
+    res = ~res;
+    res <<= lowbit;
+    return ((~large + 1) & res) + ((~small + 1) & 0);
 }
 
 /*
@@ -428,7 +438,21 @@ int byteSwap(int x, int n, int m)
 
     int res = (byte_3 << c3) + (byte_2 << c2) + (byte_1 << c1) + (byte_0 << c0);
     */
-    return 42;
+    int equal = !(n ^ m);
+    int not_equal = !equal;
+    int n_mul_8 = n << 3;
+    int m_mul_8 = m << 3;
+    int nth_byte = (x >> n_mul_8) & 0xff;
+    int mth_byte = (x >> m_mul_8) & 0xff;
+    int A, B, C;
+    int res;
+    nth_byte <<= m_mul_8;
+    mth_byte <<= n_mul_8;
+    A = 0xff << m_mul_8;
+    B = 0xff << n_mul_8;
+    C = ~(A + B) & x;
+    res = C + nth_byte + mth_byte;
+    return ((~not_equal + 1) & res) + ((~equal + 1) & x);
 }
 
 /*
@@ -495,33 +519,36 @@ int distinctNegation(int x)
  */
 int dividePower2(int x, int n)
 {
+    /* ver. 1 */
     /*
     int shift = x >> n;
-    int shift_plus = shift + 1;
-    int x_sign = x >> 30;
-    int choose_y;
-    int choose_z;
+    int shift_plus = (x + (1 << n) + (~0)) >> n;
+    int pos;
+    int neg;
+    int n_zero = !!n;
     int res;
-    x_sign >>= 1;
-    choose_y = !x_sign;
-    choose_z = !!x_sign;
-    res = ((~choose_y + 1) & shift) + ((~choose_z + 1) & shift_plus);
+    int tmp = 1 << 31;
+    neg = (!((x & tmp) ^ tmp)) & (~n_zero + 1);
+    pos = !neg;
+    res = ((~pos + 1) & shift) + ((~neg + 1) & shift_plus);
+    return res;
     */
-    /*** WRONG ***/
-    int shift = x >> n;
-    int shift_plus = shift + 1;
-    int choose_y;
-    int choose_z;
+    /* ver. 2 */
+    /*
+    int neg;
+    int n_zero = !!n;
     int res;
-    int check;
-    int tmp = 1 << 30;
-    tmp <<= 1;
-    tmp += 1;
-    check = ((x & tmp) ^ tmp) | (!n);
-
-    choose_y = !!check;
-    choose_z = !check;
-    res = ((~choose_y + 1) & shift) + ((~choose_z + 1) & shift_plus);
+    int tmp = 1 << 31;
+    neg = (!((x & tmp) ^ tmp)) & (~n_zero + 1);
+    res = (x + (((1 << n) + (~0)) & (~neg + 1))) >> n;
+    return res;
+    */
+    int rounding;
+    int res;
+    int Tmin = 1 << 31;
+    int neg = (!((x & Tmin) ^ Tmin));
+    rounding = ((1 << n) + (~0)) & (~neg + 1);
+    res = (x + rounding) >> n;
     return res;
 }
 
@@ -552,7 +579,13 @@ int evenBits(void)
  */
 int ezThreeFourths(int x)
 {
-    return 42;
+    /*** too many ops ***/
+    int x_mul_4 = x << 2;
+    int x_mul_3 = x_mul_4 + (~x + 1);
+    int neg = !!(x_mul_3 >> 31);
+    int rounding = ((1 << 2) + (~0)) & (~neg + 1);
+    int res = (x_mul_3 + rounding) >> 2;
+    return res;
 }
 
 /*
