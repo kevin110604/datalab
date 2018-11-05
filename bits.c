@@ -579,11 +579,10 @@ int evenBits(void)
  */
 int ezThreeFourths(int x)
 {
-    /*** too many ops ***/
     int x_mul_4 = x << 2;
     int x_mul_3 = x_mul_4 + (~x + 1);
-    int neg = !!(x_mul_3 >> 31);
-    int rounding = ((1 << 2) + (~0)) & (~neg + 1);
+    int sign = x_mul_3 >> 31;
+    int rounding = ((1 << 2) + (~0)) & sign;
     int res = (x_mul_3 + rounding) >> 2;
     return res;
 }
@@ -1148,7 +1147,17 @@ int isZero(int x)
  */
 int leastBitPos(int x)
 {
-    return 42;
+    /* ver. 1 */
+    /*
+    x |= x << 16;
+    x |= x << 8;
+    x |= x << 4;
+    x |= x << 2;
+    x |= x << 1;
+    return ~x + 1;
+    */
+    int x_and_x_minus_one = x & (x + ~0);
+    return x ^ x_and_x_minus_one;
 }
 
 /*
@@ -1369,7 +1378,15 @@ int satAdd(int x, int y)
  */
 int satMul2(int x)
 {
-    return 42;
+    int Tmin = 1 << 31;
+    int Tmax = Tmin + ~0;
+    int y = x << 1;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int not_ok = x_sign ^ y_sign;
+    int ok = ~not_ok;
+    int res = (y & ok) + (not_ok & ((Tmax & y_sign) + (Tmin & x_sign)));
+    return res;
 }
 
 /*
