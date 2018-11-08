@@ -480,7 +480,53 @@ int conditional(int x, int y, int z)
  */
 int countLeadingZero(int x)
 {
-    return 42;
+    int q, move;
+    int count = 0;
+    int check;
+    int y = x;
+
+    q = (y >> 16) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 16 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 24) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 8 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 28) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 4 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 30) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 2 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 31) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 31) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    count += move;
+
+    return count;
 }
 
 /*
@@ -1084,6 +1130,7 @@ int isPositive(int x)
  */
 int isPower2(int x)
 {
+    /* ver. 1 */
     /*
     int yes_or_no = 1;
     int minus_one = ~0;
@@ -1092,7 +1139,15 @@ int isPower2(int x)
     max += minus_one;
     yes_or_no = !!((x | max) ^ minus_one);
     */
-    return 42;
+    int y = x;
+    y |= y >> 16;
+    y |= y >> 8;
+    y |= y >> 4;
+    y |= y >> 2;
+    y |= y >> 1;
+    y += 1;
+    y >>= 1;
+    return (!(x ^ y)) & (!!x);
 }
 
 /*
@@ -1261,7 +1316,12 @@ int minusOne(void)
  */
 int multFiveEighths(int x)
 {
-    return 42;
+    int x_mul_4 = x << 2;
+    int x_mul_5 = x_mul_4 + x;
+    int sign = x_mul_5 >> 31;
+    int rounding = ((1 << 3) + (~0)) & sign;
+    int res = (x_mul_5 + rounding) >> 3;
+    return res;
 }
 
 /*
@@ -1336,7 +1396,10 @@ int replaceByte(int x, int n, int c)
  */
 int rotateLeft(int x, int n)
 {
-    return 42;
+    int m = 32 + (~n + 1);
+    int y = x << n;
+    int z = x >> m;
+    return (y + z);
 }
 
 /*
