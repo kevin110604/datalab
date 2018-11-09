@@ -520,42 +520,42 @@ int countLeadingZero(int x)
     int check;
     int y = x;
 
-    q = (y >> 16) | 0;
+    q = y >> 16;
     check = !q;
     check = (~check + 1);
     move = 16 & check;
     y <<= move;
     count += move;
 
-    q = (y >> 24) | 0;
+    q = y >> 24;
     check = !q;
     check = (~check + 1);
     move = 8 & check;
     y <<= move;
     count += move;
 
-    q = (y >> 28) | 0;
+    q = y >> 28;
     check = !q;
     check = (~check + 1);
     move = 4 & check;
     y <<= move;
     count += move;
 
-    q = (y >> 30) | 0;
+    q = y >> 30;
     check = !q;
     check = (~check + 1);
     move = 2 & check;
     y <<= move;
     count += move;
 
-    q = (y >> 31) | 0;
+    q = y >> 31;
     check = !q;
     check = (~check + 1);
     move = 1 & check;
     y <<= move;
     count += move;
 
-    q = (y >> 31) | 0;
+    q = y >> 31;
     check = !q;
     check = (~check + 1);
     move = 1 & check;
@@ -1084,23 +1084,28 @@ int isEqual(int x, int y)
  */
 int isGreater(int x, int y)
 {
-    /*** WRONG ***/
-    int min = 1 << 30;
-    int x_sign = x >> 30;
-    int y_sign = y >> 30;
-    int diff = x + (~y + 1);
-    int sign = diff >> 30;
-    sign >>= 1;
-    x_sign >>= 1;
-    y_sign >>= 1;
-    min <<= 1;
+    /* ver. 1 WRONG */
     /*
-     * sign is positive
-     * diff cannot be zero
-     *
-     */
-    return ((!x) & !(y ^ min)) |
+    int tmin = 1 << 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int diff = x + (~y + 1);
+    int sign = diff >> 31;
+
+    // sign is positive
+    // diff cannot be zero
+    return ((!x) & !(y ^ tmin)) |
            ((!sign) & (!!diff) & !((!!x_sign) & (!y_sign)));
+    */
+    int diff = x + (~y + 1);
+    int d_sign = diff >> 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int sign_xor = x_sign ^ y_sign;
+    int res = (d_sign + 1) & (!!diff);
+    int yes = ~(sign_xor & y_sign) + 1;
+    int no = ~(sign_xor & x_sign) + 1;
+    return (yes | res) & (!no);
 }
 
 /*
@@ -1112,11 +1117,22 @@ int isGreater(int x, int y)
  */
 int isLess(int x, int y)
 {
-    /*** WRONG ***/
+    /* ver. 1 WRONG */
+    /*
     int diff = x + (~y + 1);
     int sign = diff >> 30;
     sign >>= 1;
     return (!!sign) & (!!diff);
+    */
+    int diff = x + (~y + 1);
+    int d_sign = diff >> 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int sign_xor = x_sign ^ y_sign;
+    int res = d_sign & (!!diff);
+    int yes = ~(sign_xor & x_sign) + 1;
+    int no = ~(sign_xor & y_sign) + 1;
+    return (yes | res) & (!no);
 }
 
 /*
@@ -1128,11 +1144,22 @@ int isLess(int x, int y)
  */
 int isLessOrEqual(int x, int y)
 {
-    /*** WRONG ***/
+    /* ver. 1 WRONG */
+    /*
     int diff = x + (~y + 1);
     int sign = diff >> 30;
     sign >>= 1;
     return (!!sign) | (!diff);
+    */
+    int diff = x + (~y + 1);
+    int d_sign = diff >> 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int sign_xor = x_sign ^ y_sign;
+    int res = (~d_sign + 1) | (!diff);
+    int yes = ~(sign_xor & x_sign) + 1;
+    int no = ~(sign_xor & y_sign) + 1;
+    return (yes | res) & (!no);
 }
 
 /*
@@ -1206,7 +1233,43 @@ int isNotEqual(int x, int y)
  */
 int isPallindrome(int x)
 {
-    return 42;
+    int y = x;
+    int mask16 = (1 << 16) + (~0);
+    int mask8 = (0xff << 16) + 0xff;
+    int mask4 = (0x0f << 8) + 0x0f;
+    int mask2 = (0x33 << 8) + 0x33;
+    int mask1 = (0x55 << 8) + 0x55;
+    int tmp;
+
+    mask4 += (mask4 << 16);
+    mask2 += (mask2 << 16);
+    mask1 += (mask1 << 16);
+
+    tmp = (y >> 16) & mask16;
+    y <<= 16;
+    y += tmp;
+
+    tmp = (y >> 8) & mask8;  // org high bit
+    y &= mask8;              // org low bit
+    y <<= 8;                 // move low to high
+    y += tmp;
+
+    tmp = (y >> 4) & mask4;
+    y &= mask4;
+    y <<= 4;
+    y += tmp;
+
+    tmp = (y >> 2) & mask2;
+    y &= mask2;
+    y <<= 2;
+    y += tmp;
+
+    tmp = (y >> 1) & mask1;
+    y &= mask1;
+    y <<= 1;
+    y += tmp;
+
+    return !(x ^ y);
 }
 
 /*
@@ -1328,7 +1391,53 @@ int leastBitPos(int x)
  */
 int leftBitCount(int x)
 {
-    return 42;
+    int q, move;
+    int count = 0;
+    int check;
+    int y = ~x;
+
+    q = y >> 16;
+    check = !q;
+    check = (~check + 1);
+    move = 16 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 24;
+    check = !q;
+    check = (~check + 1);
+    move = 8 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 28;
+    check = !q;
+    check = (~check + 1);
+    move = 4 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 30;
+    check = !q;
+    check = (~check + 1);
+    move = 2 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 31;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 31;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    count += move;
+
+    return count;
 }
 
 /*
@@ -1381,7 +1490,16 @@ int logicalShift(int x, int n)
  */
 int maximumOfTwo(int x, int y)
 {
-    return 42;
+    int diff = x + (~y + 1);
+    int d_sign = diff >> 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int sign_xor = x_sign ^ y_sign;
+    int yes = sign_xor & y_sign;
+    int no = sign_xor & x_sign;
+    int greater = (yes | ~d_sign) & (~no);
+
+    return (greater & x) + (~greater & y);
 }
 
 /*
@@ -1392,7 +1510,16 @@ int maximumOfTwo(int x, int y)
  */
 int minimumOfTwo(int x, int y)
 {
-    return 42;
+    int diff = x + (~y + 1);
+    int d_sign = diff >> 31;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int sign_xor = x_sign ^ y_sign;
+    int yes = sign_xor & x_sign;
+    int no = sign_xor & y_sign;
+    int less = (yes | d_sign) & (~no);
+
+    return (less & x) + (~less & y);
 }
 
 /*
