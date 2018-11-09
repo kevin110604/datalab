@@ -396,7 +396,42 @@ int bitParity(int x)
  */
 int bitReverse(int x)
 {
-    return 42;
+    int mask16 = (1 << 16) + (~0);
+    int mask8 = (0xff << 16) + 0xff;
+    int mask4 = (0x0f << 8) + 0x0f;
+    int mask2 = (0x33 << 8) + 0x33;
+    int mask1 = (0x55 << 8) + 0x55;
+    int tmp;
+
+    mask4 += (mask4 << 16);
+    mask2 += (mask2 << 16);
+    mask1 += (mask1 << 16);
+
+    tmp = (x >> 16) & mask16;
+    x <<= 16;
+    x += tmp;
+
+    tmp = (x >> 8) & mask8;  // org high bit
+    x &= mask8;              // org low bit
+    x <<= 8;                 // move low to high
+    x += tmp;
+
+    tmp = (x >> 4) & mask4;
+    x &= mask4;
+    x <<= 4;
+    x += tmp;
+
+    tmp = (x >> 2) & mask2;
+    x &= mask2;
+    x <<= 2;
+    x += tmp;
+
+    tmp = (x >> 1) & mask1;
+    x &= mask1;
+    x <<= 1;
+    x += tmp;
+
+    return x;
 }
 
 /*
@@ -890,7 +925,17 @@ int getByte(int x, int n)
  */
 int greatestBitPos(int x)
 {
-    return 42;
+    int zero = !!x;
+    int Tmax = 1 << 31;
+    Tmax += ~0;
+    x |= x >> 16;
+    x |= x >> 8;
+    x |= x >> 4;
+    x |= x >> 2;
+    x |= x >> 1;
+    x >>= 1;
+    x &= Tmax;
+    return (x + 1) & (~zero + 1);
 }
 
 /* howManyBits - return the minimum number of bits required to represent x in
@@ -934,7 +979,65 @@ int implication(int x, int y)
  */
 int intLog2(int x)
 {
-    return 42;
+    int q, move;
+    int count = 0;
+    int check;
+
+    int y; /* greatestBitPos */
+    int zero = !!x;
+    int Tmax = 1 << 31;
+    Tmax += ~0;
+    x |= x >> 16;
+    x |= x >> 8;
+    x |= x >> 4;
+    x |= x >> 2;
+    x |= x >> 1;
+    x >>= 1;
+    x &= Tmax;
+    y = (x + 1) & (~zero + 1);
+
+    q = (y >> 16) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 16 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 24) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 8 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 28) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 4 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 30) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 2 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 31) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    y <<= move;
+    count += move;
+
+    q = (y >> 31) | 0;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    count += move;
+
+    return 31 + (~count + 1);
 }
 
 /*
