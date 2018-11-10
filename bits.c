@@ -1504,7 +1504,7 @@ int maximumOfTwo(int x, int y)
 
 /*
  * minimumOfTwo - compute the minimum of two integers without branching
- *   Legal ops: ! ~ & ^ | + << >>
+ *   Legal ops: ! ~ & ^ | + << >
  *   Max ops: 20
  *   Rating: 4
  */
@@ -1592,7 +1592,11 @@ int oddBits(void)
  */
 int remainderPower2(int x, int n)
 {
-    return 42;
+    int mask = (1 << n) + (~0);
+    int sign = x >> 31;
+    int rmd = mask & x;
+    int zero = !!rmd;
+    return ((sign << n) + rmd) & (~zero + 1);
 }
 
 /*
@@ -1626,23 +1630,36 @@ int replaceByte(int x, int n, int c)
  */
 int rotateLeft(int x, int n)
 {
+    /* ver. 1 WRONG */
+    /*
     int m = 32 + (~n + 1);
     int y = x << n;
     int z = x >> m;
     return (y + z);
+    */
+    int mask = (1 << n) + (~0);
+    int zero = !!n;
+    int m = (32 + (~n + 1)) & (~zero + 1);
+    int tmp = (x >> m) & mask;
+    return (x << n) + tmp;
 }
 
 /*
  * rotateRight - Rotate x to the right by n
  *               Can assume that 0 <= n <= 31
- *   Examples: rotateRight(0x87654321, 4) = 0x76543218
+ *   Examples: rotateRight(0x87654321, 4) = 0x18765432
  *   Legal ops: ~ & ^ | + << >> !
  *   Max ops: 25
  *   Rating: 3
  */
 int rotateRight(int x, int n)
 {
-    return 42;
+    int mask = (1 << n) + (~0);
+    int zero = !!n;
+    int m = (32 + (~n + 1)) & (~zero + 1);
+    int mask2 = ((1 << 31) >> n) << 1;
+    int tmp = x & mask;
+    return ((x >> n) & (~mask2)) + (tmp << m);
 }
 
 /*
@@ -1657,7 +1674,16 @@ int rotateRight(int x, int n)
  */
 int satAdd(int x, int y)
 {
-    return 42;
+    int res = x + y;
+    int x_sign = x >> 31;
+    int y_sign = y >> 31;
+    int r_sign = res >> 31;
+    int flow = ~(x_sign ^ y_sign) & (x_sign ^ r_sign);
+    int o_or_u = r_sign ^ 0;
+    int tmin = 1 << 31;
+    int tmax = tmin + (~0);
+    res = (~flow & res) + (flow & ((o_or_u & tmax) + (~o_or_u & tmin)));
+    return res;
 }
 
 /*
