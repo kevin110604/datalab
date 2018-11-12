@@ -624,12 +624,9 @@ int dividePower2(int x, int n)
     res = (x + (((1 << n) + (~0)) & (~neg + 1))) >> n;
     return res;
     */
-    int rounding;
-    int res;
-    int Tmin = 1 << 31;
-    int neg = (!((x & Tmin) ^ Tmin));
-    rounding = ((1 << n) + (~0)) & (~neg + 1);
-    res = (x + rounding) >> n;
+    int sign = x >> 31;
+    int rounding = ((1 << n) + (~0)) & sign;
+    int res = (x + rounding) >> n;
     return res;
 }
 
@@ -1504,7 +1501,7 @@ int maximumOfTwo(int x, int y)
 
 /*
  * minimumOfTwo - compute the minimum of two integers without branching
- *   Legal ops: ! ~ & ^ | + << >
+ *   Legal ops: ! ~ & ^ | + << >>
  *   Max ops: 20
  *   Rating: 4
  */
@@ -1679,10 +1676,10 @@ int satAdd(int x, int y)
     int y_sign = y >> 31;
     int r_sign = res >> 31;
     int flow = ~(x_sign ^ y_sign) & (x_sign ^ r_sign);
-    int o_or_u = r_sign ^ 0;
-    int tmin = 1 << 31;
-    int tmax = tmin + (~0);
-    res = (~flow & res) + (flow & ((o_or_u & tmax) + (~o_or_u & tmin)));
+    int o_or_u = r_sign;
+    int Tmin = 1 << 31;
+    int Tmax = Tmin + (~0);
+    res = (~flow & res) + (flow & ((o_or_u & Tmax) + (~o_or_u & Tmin)));
     return res;
 }
 
@@ -1721,7 +1718,18 @@ int satMul2(int x)
  */
 int satMul3(int x)
 {
-    return 42;
+    int res1 = x << 1;
+    int x_sign = x >> 31;
+    int r1_sign = res1 >> 31;
+    int flow1 = x_sign ^ r1_sign;
+    int res = res1 + x;
+    int r_sign = res >> 31;
+    int flow = flow1 | (x_sign ^ r_sign);
+    int o_or_u = ~x_sign;
+    int Tmin = 1 << 31;
+    int Tmax = Tmin + (~0);
+    res = (~flow & res) + (flow & ((o_or_u & Tmax) + (~o_or_u & Tmin)));
+    return res;
 }
 
 /*
@@ -1871,7 +1879,27 @@ int tmin(void)
  */
 int trueFiveEighths(int x)
 {
-    return 42;
+    /*
+    int sign = x >> 31;
+    int rounding = ((1 << 3) + (~0)) & sign;
+    int res = (x + rounding) >> 3;
+    res = res + res + res + res + res;
+    return res;
+    */
+    int sign = x >> 31;
+    int rmd = x & 0x7;
+    int res = x >> 3;
+    int floating, rounding;
+    rmd = (rmd << 2) + rmd;
+    floating = rmd;
+    floating >>= 3;
+    floating &= ~sign;
+    rounding = rmd;
+    rounding += 0x7;
+    rounding >>= 3;
+    rounding &= sign;
+    res = (res << 2) + res + floating + rounding;
+    return res;
 }
 
 /*
@@ -1886,7 +1914,50 @@ int trueFiveEighths(int x)
  */
 int trueThreeFourths(int x)
 {
-    return 42;
+    /*
+    int sign = x >> 31;
+    int twobit = x & 0x3;
+    int res = x >> 2;
+    res = (res << 1) + res;
+
+    twobit += (sign << 2);
+    twobit = (twobit << 1) + twobit;
+    twobit >>= 2;
+    return res + twobit;
+    */
+    /*
+    int x_mul_2 = x << 1;
+    int x_mul_3 = x_mul_2 + x;
+    int sign = x_mul_3 >> 31;
+    int rounding = ((1 << 2) + (~0)) & sign;
+    int res = (x_mul_3 + rounding) >> 2;
+    return res;
+    */
+    /*
+    int sign = x >> 31;
+    int rounding = ((1 << 2) + (~0)) & sign;
+    int res = (x + rounding) >> 2;
+    int floating = x & 0x3;
+    floating = floating + floating + floating;
+    floating >>= 2;
+    floating &= ~sign;
+    res = res + res + res + floating;
+    return res;
+    */
+    int sign = x >> 31;
+    int rmd = x & 0x3;
+    int res = x >> 2;
+    int floating, rounding;
+    rmd = rmd + rmd + rmd;
+    floating = rmd;
+    floating >>= 2;
+    floating &= ~sign;
+    rounding = rmd;
+    rounding += 0x3;
+    rounding >>= 2;
+    rounding &= sign;
+    res = res + res + res + floating + rounding;
+    return res;
 }
 
 /*
