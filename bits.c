@@ -720,7 +720,7 @@ unsigned floatAbsVal(unsigned uf)
 {
     if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
         if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
-            return uf;
+            return uf;                     /* NaN */
     unsigned miss_sign = uf & 0x7fffffffu;
     return miss_sign;
 }
@@ -769,10 +769,10 @@ unsigned floatInt2Float(int x)
  */
 int floatIsEqual(unsigned uf, unsigned ug)
 {
-    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
         if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
             return 0;
-    if ((ug & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+    if ((ug & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
         if ((ug & 0x007fffffu) != 0)       /* fraction is nonzero */
             return 0;
     if ((uf == 0x00000000u) || (uf == 0x80000000u))
@@ -810,7 +810,7 @@ int floatIsLess(unsigned uf, unsigned ug)
  */
 unsigned floatNegate(unsigned uf)
 {
-    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
         if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
             return uf;
     uf = uf ^ 0x80000000u;
@@ -833,7 +833,16 @@ unsigned floatNegate(unsigned uf)
  */
 unsigned floatPower2(int x)
 {
-    return 42;
+    int x_plus_bias = x + 127;
+    unsigned exponent = x_plus_bias & 0x000000ffu;
+    unsigned res = exponent << 23;
+    if (x_plus_bias < 0 || x_plus_bias > 255) {
+        if (x_plus_bias > 255)
+            return 0x7f800000;
+        else
+            return 0;
+    }
+    return res;
 }
 
 /*
@@ -849,7 +858,26 @@ unsigned floatPower2(int x)
  */
 unsigned floatScale1d2(unsigned uf)
 {
-    return 42;
+    unsigned sign = uf & 0x80000000u;
+    unsigned exponent = uf & 0x7f800000u;
+    unsigned fraction = uf & 0x007fffffu;
+    unsigned fraction_rshift1 = fraction >> 1;
+    unsigned back = !(exponent - 0x00800000u);
+
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return uf;
+    if (uf == 0u || uf == 0x80000000u) /* +-0 */
+        return uf;
+    if (uf == 0x7f800000u || uf == 0xff800000u) /* +-infinity */
+        return uf;
+
+    if (exponent == 0u || back) {                    /* denormalized number */
+        if ((fraction & 0x00000003u) == 0x00000003u) /* 4n + 3 */
+            return sign + fraction_rshift1 + back * 0x00400000u + 1u;
+        return sign + fraction_rshift1 + back * 0x00400000u;
+    }
+    return uf - 0x00800000u;
 }
 
 /*
@@ -865,7 +893,22 @@ unsigned floatScale1d2(unsigned uf)
  */
 unsigned floatScale2(unsigned uf)
 {
-    return 42;
+    unsigned exponent = uf & 0x7f800000u;
+    unsigned fraction = uf & 0x007fffffu;
+    unsigned sign = uf & 0x80000000u;
+
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return uf;
+    if (uf == 0u || uf == 0x80000000u) /* +-0 */
+        return uf;
+    if (uf == 0x7f800000u || uf == 0xff800000u) /* +-infinity */
+        return uf;
+    if (exponent == 0u) { /* denormalized number */
+        fraction <<= 1;
+        return sign + fraction;
+    }
+    return uf + 0x00800000u;
 }
 
 /*
@@ -949,7 +992,54 @@ int greatestBitPos(int x)
  */
 int howManyBits(int x)
 {
-    return 0;
+    int sign = x >> 31;
+    int q, move;
+    int count = 0;
+    int check;
+    int y = x ^ sign;
+
+    q = y >> 16;
+    check = !q;
+    check = (~check + 1);
+    move = 16 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 24;
+    check = !q;
+    check = (~check + 1);
+    move = 8 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 28;
+    check = !q;
+    check = (~check + 1);
+    move = 4 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 30;
+    check = !q;
+    check = (~check + 1);
+    move = 2 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 31;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    y <<= move;
+    count += move;
+
+    q = y >> 31;
+    check = !q;
+    check = (~check + 1);
+    move = 1 & check;
+    count += move;
+
+    return 34 + (~count);
 }
 
 /*
