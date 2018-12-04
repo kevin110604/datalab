@@ -718,9 +718,9 @@ int fitsShort(int x)
  */
 unsigned floatAbsVal(unsigned uf)
 {
-    if ((uf & 0x7f800000u) == 0x7f800000u) /* exp is 255 */
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
         if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
-            return uf;                     /* NaN */
+            return uf;
     unsigned miss_sign = uf & 0x7fffffffu;
     return miss_sign;
 }
@@ -739,7 +739,37 @@ unsigned floatAbsVal(unsigned uf)
  */
 int floatFloat2Int(unsigned uf)
 {
-    return 42;
+    unsigned sign = uf & 0x80000000u;
+    unsigned exponent = uf & 0x7f800000u;
+    unsigned fraction = uf & 0x007fffffu;
+    int power = (exponent >> 23) - 127;
+    int num = fraction + 0x00800000;
+    int res;
+
+    if (exponent == 0x7f800000u) /* NaN, exp is 255 */
+        if (fraction != 0)       /* fraction is nonzero */
+            return 0x80000000u;
+    if (uf == 0x7f800000u || uf == 0xff800000u) /* +-infinity */
+        return 0x80000000u;
+    if (exponent == 0u) /* denormalized number & +-0*/
+        return 0;
+    if (power < 0)
+        return 0;
+    if (power > 23) {
+        res = num << (power - 23);
+        if (sign) {
+            if (power >= 29)
+                return 0x80000000;
+            return ~res + 1;
+        }
+        if (power >= 29)
+            return 0x80000000;
+        return res;
+    }
+    res = num >> (23 - power);
+    if (sign)
+        return ~res + 1;
+    return res;
 }
 
 /*
@@ -753,7 +783,62 @@ int floatFloat2Int(unsigned uf)
  */
 unsigned floatInt2Float(int x)
 {
-    return 42;
+    /*** WRONG ***/
+    int x_sign = x >> 31;
+    int abs_x = (x ^ x_sign) + (~x_sign + 1);
+    int i;
+    int power = 0;
+    int flag = 0, count = 0;
+    unsigned sign = x & 0x80000000;
+    unsigned exponent;
+    unsigned fraction = 0u;
+    // int mask = 0x7fffffff;
+    int G = 0, R = 0, S = 0;
+
+    if (x == 0)
+        return 0u;
+    if (x == 0x80000000)
+        return 0xcf000000u;
+    for (i = 1; i < 32; i++) {
+        if (flag) {
+            fraction <<= 1;
+            fraction += (abs_x >> (31 - i)) & 0x1u;
+            count++;
+            if (i == 31) {
+                fraction <<= (23 - count);
+                if (count == 23)
+                    G = abs_x & 0x1;
+            } else if (count == 23) {
+                if (i == 30) {
+                    G = (abs_x >> (31 - i)) & 0x1;
+                    R = (abs_x >> (31 - i - 1)) & 0x1;
+                    break;
+                }
+                G = (abs_x >> (31 - i)) & 0x1;
+                R = (abs_x >> (31 - i - 1)) & 0x1;
+                S = abs_x << (i + 2);
+                S = !!S;
+                break;
+            }
+        }
+        if ((!flag) && ((abs_x << i) & 0x80000000)) {
+            power = i;
+            flag = 1;
+        }
+    }
+    // mask >>= (power + 23);
+    // if (sign && (abs_x & mask))
+    //    fraction++;
+    if ((G + R + S) > 2)
+        fraction++;
+    power = 31 - power;
+    power += 127;
+    exponent = power & 0x000000ff;
+    exponent <<= 23;
+
+    // if (sign)
+    // return sign + exponent + fraction + 1;
+    return sign + exponent + fraction;
 }
 
 /*
