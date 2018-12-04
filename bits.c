@@ -783,22 +783,24 @@ int floatFloat2Int(unsigned uf)
  */
 unsigned floatInt2Float(int x)
 {
-    /*** WRONG ***/
-    int x_sign = x >> 31;
-    int abs_x = (x ^ x_sign) + (~x_sign + 1);
+    /*** too many ops ***/
+    int abs_x = x;
     int i;
     int power = 0;
     int flag = 0, count = 0;
     unsigned sign = x & 0x80000000;
     unsigned exponent;
     unsigned fraction = 0u;
-    // int mask = 0x7fffffff;
     int G = 0, R = 0, S = 0;
 
     if (x == 0)
         return 0u;
     if (x == 0x80000000)
         return 0xcf000000u;
+
+    if (x < 0)
+        abs_x = -x;
+
     for (i = 1; i < 32; i++) {
         if (flag) {
             fraction <<= 1;
@@ -809,13 +811,10 @@ unsigned floatInt2Float(int x)
                 if (count == 23)
                     G = abs_x & 0x1;
             } else if (count == 23) {
-                if (i == 30) {
-                    G = (abs_x >> (31 - i)) & 0x1;
-                    R = (abs_x >> (31 - i - 1)) & 0x1;
-                    break;
-                }
                 G = (abs_x >> (31 - i)) & 0x1;
                 R = (abs_x >> (31 - i - 1)) & 0x1;
+                if (i == 30)
+                    break;
                 S = abs_x << (i + 2);
                 S = !!S;
                 break;
@@ -826,18 +825,19 @@ unsigned floatInt2Float(int x)
             flag = 1;
         }
     }
-    // mask >>= (power + 23);
-    // if (sign && (abs_x & mask))
-    //    fraction++;
-    if ((G + R + S) > 2)
-        fraction++;
+
+    if (G && R && !S)
+        fraction += 1;
+    if (!G && R && S)
+        fraction += 1;
+    if (G && R && S)
+        fraction += 1;
+
     power = 31 - power;
     power += 127;
     exponent = power & 0x000000ff;
     exponent <<= 23;
 
-    // if (sign)
-    // return sign + exponent + fraction + 1;
     return sign + exponent + fraction;
 }
 
