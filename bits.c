@@ -821,7 +821,7 @@ unsigned floatInt2Float(int x)
             }
         }
         if ((!flag) && ((abs_x << i) & 0x80000000)) {
-            power = i;
+            power = 31 - i;
             flag = 1;
         }
     }
@@ -833,7 +833,6 @@ unsigned floatInt2Float(int x)
     if (G && R && S)
         fraction += 1;
 
-    power = 31 - power;
     power += 127;
     exponent = power & 0x000000ff;
     exponent <<= 23;
@@ -978,9 +977,9 @@ unsigned floatScale1d2(unsigned uf)
  */
 unsigned floatScale2(unsigned uf)
 {
+    unsigned sign = uf & 0x80000000u;
     unsigned exponent = uf & 0x7f800000u;
     unsigned fraction = uf & 0x007fffffu;
-    unsigned sign = uf & 0x80000000u;
 
     if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
         if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
@@ -1009,7 +1008,39 @@ unsigned floatScale2(unsigned uf)
  */
 unsigned floatScale64(unsigned uf)
 {
-    return 42;
+    unsigned sign = uf & 0x80000000u;
+    unsigned exponent = uf & 0x7f800000u;
+    unsigned fraction = uf & 0x007fffffu;
+    unsigned exp_6msb = uf & 0x007e0000u;
+    unsigned frac_msb;
+    int i;
+
+    if ((uf & 0x7f800000u) == 0x7f800000u) /* NaN, exp is 255 */
+        if ((uf & 0x007fffffu) != 0)       /* fraction is nonzero */
+            return uf;
+    if (uf == 0u || uf == 0x80000000u) /* +-0 */
+        return uf;
+    if (uf == 0x7f800000u || uf == 0xff800000u) /* +-infinity */
+        return uf;
+    if (exponent == 0u) { /* denormalized number */
+        if (exp_6msb) {
+            for (i = 1; i <= 6; i++) {
+                frac_msb = fraction & 0x00400000u;
+                fraction <<= 1;
+                if (frac_msb)
+                    break;
+            }
+            return sign + ((6 - i) << 23) + fraction;
+        }
+        fraction <<= 6;
+        return sign + fraction;
+    }
+    if (exponent >= 0x7d000000u) {
+        if (sign)
+            return 0xff800000u;
+        return 0x7f800000u;
+    }
+    return uf + 0x03000000u;
 }
 
 /*
@@ -1023,7 +1054,54 @@ unsigned floatScale64(unsigned uf)
  */
 unsigned floatUnsigned2Float(unsigned u)
 {
-    return 42;
+    /*** too many ops ***/
+    int i;
+    int power = 0;
+    int flag = 0, count = 0;
+    unsigned exponent;
+    unsigned fraction = 0u;
+    int G = 0, R = 0, S = 0;
+
+    if (u == 0u)
+        return 0u;
+
+    for (i = 0; i < 32; i++) {
+        if (flag) {
+            fraction <<= 1;
+            fraction += (u >> (31 - i)) & 0x1u;
+            count++;
+            if (i == 31) {
+                fraction <<= (23 - count);
+                if (count == 23)
+                    G = u & 0x1;
+            } else if (count == 23) {
+                G = (u >> (31 - i)) & 0x1;
+                R = (u >> (31 - i - 1)) & 0x1;
+                if (i == 30)
+                    break;
+                S = u << (i + 2);
+                S = !!S;
+                break;
+            }
+        }
+        if ((!flag) && ((u << i) & 0x80000000)) {
+            power = 31 - i;
+            flag = 1;
+        }
+    }
+
+    if (G && R && !S)
+        fraction += 1;
+    if (!G && R && S)
+        fraction += 1;
+    if (G && R && S)
+        fraction += 1;
+
+    power += 127;
+    exponent = power & 0x000000ff;
+    exponent <<= 23;
+
+    return exponent + fraction;
 }
 
 /*
