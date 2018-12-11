@@ -878,7 +878,47 @@ int floatIsEqual(unsigned uf, unsigned ug)
  */
 int floatIsLess(unsigned uf, unsigned ug)
 {
-    return 42;
+    unsigned f_sign = uf & 0x80000000u;
+    unsigned f_exponent = uf & 0x7f800000u;
+    unsigned f_fraction = uf & 0x007fffffu;
+    unsigned g_sign = ug & 0x80000000u;
+    unsigned g_exponent = ug & 0x7f800000u;
+    unsigned g_fraction = ug & 0x007fffffu;
+
+    if (f_exponent == 0x7f800000u) /* NaN, exp is 255 */
+        if (f_fraction != 0)       /* fraction is nonzero */
+            return 0;
+    if (g_exponent == 0x7f800000u) /* NaN, exp is 255 */
+        if (g_fraction != 0)       /* fraction is nonzero */
+            return 0;
+    if ((uf == 0x00000000u) || (uf == 0x80000000u))
+        if ((ug == 0x00000000u) || (ug == 0x80000000u))
+            return 0;
+    if (f_sign > g_sign) /* f<0, g>=0 */
+        return 1;
+    if (f_sign < g_sign) /* f>=0, g<0 */
+        return 0;
+    if (f_exponent > g_exponent) {
+        if (f_sign)
+            return 1;
+        return 0;
+    }
+    if (f_exponent < g_exponent) {
+        if (f_sign)
+            return 0;
+        return 1;
+    }
+    if (f_fraction > g_fraction) {
+        if (f_sign)
+            return 1;
+        return 0;
+    }
+    if (f_fraction < g_fraction) {
+        if (f_sign)
+            return 0;
+        return 1;
+    }
+    return 0; /* equal case */
 }
 
 /*
